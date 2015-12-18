@@ -1,4 +1,7 @@
 library(shiny)
+library(shinydashboard)
+library(shinyjs)
+library(DT)
 
 shinyServer(function(input, output, session) {
     v <- reactiveValues(
@@ -15,26 +18,23 @@ shinyServer(function(input, output, session) {
     })
 
     set_values <- function(value) {
-        v$user$time[v$counter] <- Sys.time()
+        v$user$resp_time[v$counter] <- Sys.time()
         v$user$answers[v$counter] <- value
         v$counter <- v$counter + 1
     }
 
     observe({
-        if (is.na(input$age) || input$gender == "") {
-            shinyjs::disable("start")
-        } else {
-            shinyjs::enable("start")
-            shinyjs::hide("help")
-        }
+        toggleState("start", !is.na(input$age) && input$gender != "")
+        toggleState("download", v$counter > n)
         if (v$counter > 0) {
-            shinyjs::disable("gender")
-            shinyjs::disable("age")
-            shinyjs::disable("start")
+            disable("gender")
+            disable("age")
+            disable("start")
+            hide("help")
         }
         if (v$counter > n) {
             isolate({
-                v$user$end_test <- unname(v$user$time[n])
+                v$user$end_test <- unname(v$user$resp_time[n])
                 v$user <- get_scores(v$user, kyes, formulas)
                 v$user$hash <- digest::digest(v$user)
                 #saveRDS(v$user, paste0("user-", v$user$hash, ".RDS"))
@@ -47,9 +47,11 @@ shinyServer(function(input, output, session) {
         #v$counter <- 1L
         v$user$age <- input$age
         v$user$gender <- input$gender
+        v$counter <- 150
+        v$user$answers[] <- sample(levels(user_data$answers), length(user_data$answers), TRUE)
     })
     observeEvent(input$end, {
-        updateTabItems(session, "tabs", "results")
+        updateTabItems(session, "tabs", "scales")
     })
 
     observeEvent(input$ans1, {
@@ -93,28 +95,67 @@ shinyServer(function(input, output, session) {
         print(v$user)
     })
 
-    output$scales <- DT::renderDataTable({
+    output$scales <- renderDataTable({
         DF <- data.frame(
             Шкала = sprintf("%s (%s)", scales$long, scales$short),
             Балл = v$user$scales,
-            Уровень = get_levels(v$user$scales, scales$mean, scales$sd)
+            Уровень = get_levels(v$user$scales, scales$mean, scales$sd),
+            stringsAsFactors = FALSE
         )
-        DT <- DT::datatable(DF, selection = "none", options = list(paging = FALSE, dom = 't'))
-        DT::formatStyle(DT, "Балл", fontWeight = "bold")
+        DT <- datatable(DF, rownames = FALSE, selection = "none", options = list(paging = FALSE, dom = 't'))
+        formatStyle(DT, "Балл", fontWeight = "bold")
     })
 
-    output$indexes <- DT::renderDataTable({
+    output$indexes <- renderDataTable({
         DF <- data.frame(
             Индекс = sprintf("%s (%s)", indexes$long, indexes$short),
             Балл = v$user$indexes,
-            Уровень = get_levels(v$user$indexes, indexes$mean, indexes$sd)
+            Уровень = get_levels(v$user$indexes, indexes$mean, indexes$sd),
+            stringsAsFactors = FALSE
         )
-        DT <- DT::datatable(DF, selection = "none", options = list(paging = FALSE, dom = 't'))
-        DT::formatStyle(DT, "Балл", fontWeight = "bold")
+        DT <- datatable(DF, rownames = FALSE, selection = "none", options = list(paging = FALSE, dom = 't'))
+        formatStyle(DT, "Балл", fontWeight = "bold")
     })
 
     output$plot_types <- renderPlot({
         plot_types(v$user)
     })
 
+    output$plot_resp_time <- renderPlot({
+        time <- diff(c(v$user$start_test, v$user$resp_time), units = "ms")
+        ggplot(NULL, aes(x = time)) +
+            geom_density() +
+            labs(x = "Время", y = "Плотность вероятности")
+    })
+
+    output$plot_resp_bar <- renderPlot({
+        answers <- factor(v$user$answers, levels = 1:4, labels = c("Не характерно", "Мало характерно", "Довольно характерно", "Характерно"))
+        ggplot(NULL, aes(x = answers)) + geom_bar() +
+            labs(x = "Ответы", y = "Частота")
+    })
+
+    output$plot_answers <- renderPlot({
+        data <- data.frame(
+            Номер = seq_len(n),
+            Ответ = factor(v$user$answers, levels = 1:4, labels = c("Не характерно", "Мало характерно", "Довольно характерно", "Характерно")),
+            Время = as.double(diff(c(v$user$start_test, v$user$resp_time), units = "ms")))
+        ggplot(data, aes(x = Ответ, y = Номер, fill = Время)) +
+            geom_tile(color = "black") +
+            scale_y_reverse() +
+            scale_fill_gradient(low = "steelblue4", high = "red")
+    })
+
+    output$download <- downloadHandler(
+        filename = function() {
+            paste0(Sys.Date(), "-ofdsi-report.pdf")
+        },
+        content = function(file) {
+            src <- normalizePath("report.Rnw")
+            owd <- setwd(tempdir())
+            on.exit(setwd(owd))
+            file.copy(src, "report.Rnw", overwrite = TRUE)
+            out <- knitr::knit2pdf("report.Rnw")
+            file.rename(out, file)
+        }
+    )
 })

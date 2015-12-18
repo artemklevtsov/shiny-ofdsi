@@ -7,12 +7,12 @@ get_scores <- function(data, kyes, indexes) {
 }
 
 get_levels <- function(value, mean, sd) {
+    res <- structure(rep("Не установлен", length(value)), names = names(value))
     if (all(value == 0) || all(is.na(value)))
-        return(rep("Не установлен", length(value)))
-    res <- structure(character(length(value)), names = names(value))
+        return(res)
     res[value < mean - sd] <- "Низкий"
     res[value > mean + sd] <- "Высокий"
-    res[res == ""] <- "Средний"
+    res[value >= mean - sd & value <= mean + sd] <- "Средний"
     return(res)
 }
 
@@ -58,7 +58,6 @@ plot_types <- function(data) {
         geom_vline(xintercept = xsd, linetype = "dashed", alpha = 0.3) +
         geom_hline(yintercept = ysd, linetype = "dashed", alpha = 0.3) +
         coord_fixed(ratio) +
-        theme_minimal() +
         annotate("text", x = rep(text_x, 2), y = rep(text_y, each = 2), label = text, alpha = 0.5) +
         theme(legend.position = "bottom",
               legend.direction = "vertical",

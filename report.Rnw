@@ -1,0 +1,63 @@
+\documentclass[12pt,a4paper,pagesize,appendixprefix]{scrreprt}
+%%% Различные фиксы для KOMA-Script классов %%%
+\usepackage{scrhack}
+%%% Кодировки и языки %%%
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[english,russian]{babel}
+%%% Лулчшенный поиск по тексту в PDF %%%
+\usepackage{cmap}
+%%% Изменение межстрочного интервала %%%
+\usepackage{setspace}
+  \singlespacing
+%%% Таблицы %%%
+\usepackage{booktabs}
+\usepackage{multirow}
+%%% Сноски в таблицах %%%
+\usepackage{tablefootnote}
+%%% Положение таблиц и рисунков %%%
+\usepackage{float}
+\floatplacement{figure}{H}
+\floatplacement{table}{H}
+\floatplacement{longtable}{H}
+%%% Формат заголовков %%%
+\usepackage{caption}
+  \captionsetup{format=plain,justification=centering,labelsep=period}
+  \captionsetup[table]{position=top}
+  \captionsetup[figure]{position=bottom}
+%%% Начало нумерации сносок с каждой страницы %%%
+\usepackage{perpage}
+  \MakePerPage{footnote}
+%%% Разное %%%
+\makeatletter
+  \@addtoreset{chapter}{part} % Начало нумерации глав заново в каждой части
+  \renewcommand{\@biblabel}[1]{#1.} % Замена [] на точку в списке литературы
+\makeatother
+
+\begin{document}
+
+\title{Отчёт по результатам психологического тестирования}
+\date{\today}
+
+\maketitle
+
+<<setup, include = FALSE>>=
+library(knitr)
+opts_chunk$set(
+    echo = FALSE,
+    results = "asis",
+    collapse = TRUE,
+    dev = "cairo_pdf"
+)
+@
+
+\section{Общие сведения}
+
+
+Пол испытуемого: \Sexpr{v$user$gender}
+
+<<cars>>=
+kable(scales, booktabs = TRUE)
+@
+
+\end{document}

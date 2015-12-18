@@ -34,7 +34,7 @@ write_data <- function(data, dbname = "db.sqlite") {
                 table, columns, values)
     }
     dbGetQuery(db, sql("answers", data$answers))
-    dbGetQuery(db, sql("timings", format(data$time, tz = "UTC")))
+    dbGetQuery(db, sql("timings", format(data$resp_time, tz = "UTC")))
     dbGetQuery(db, sql("results", c(data$scales, data$indexes)))
     dbGetQuery(db, sql("users", c(start_session = format(data$start_test, tz = "UTC"),
                                   end_session = format(data$end_session, tz = "UTC"),
