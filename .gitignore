@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 *.sqlite
+report.*
+report-*
