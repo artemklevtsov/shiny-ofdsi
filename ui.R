@@ -12,8 +12,8 @@ shinyUI(dashboardPage(
         sidebarMenu(id = "tabs",
                     menuItem("Опросник", tabName = "quiz", icon = icon("pencil-square-o")),
                     menuItem("Протокол", tabName = "protocol", icon = icon("bars")),
-                    menuItem("Показатели", tabName = "scales", icon = icon("bar-chart")),
-                    menuItem("Журнал", tabName = "log"),
+                    menuItem("Показатели", tabName = "scales", icon = icon("table")),
+                    menuItem("Графики", tabName = "plots", icon = icon("bar-chart")),
                     hr(),
                     selectInput("gender", "Пол", c("", "Мужчина", "Женщина")),
                     numericInput("age", "Возраст", NA, min = 16, step = 1),
@@ -52,9 +52,11 @@ shinyUI(dashboardPage(
                                  DT::dataTableOutput("indexes"))
                     )
             ),
-            tabItem(tabName = "log",
+            tabItem(tabName = "plots",
                     box(width = NULL,
-                        verbatimTextOutput("log"))
+                        height = "500px",
+                        plotOutput("plot_types")
+                    )
             )
         )
     )
