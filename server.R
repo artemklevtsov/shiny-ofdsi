@@ -47,9 +47,6 @@ shinyServer(function(input, output, session) {
         #v$counter <- 1L
         v$user$age <- input$age
         v$user$gender <- input$gender
-        v$counter <- 150L
-        v$user$answers[] <- sample(1:4, 150, TRUE)
-
     })
     observeEvent(input$end, {
         updateTabItems(session, "tabs", "results")
@@ -98,26 +95,26 @@ shinyServer(function(input, output, session) {
 
     output$scales <- DT::renderDataTable({
         DF <- data.frame(
-            Шкалы = sprintf("%s (%s)", scales$long, scales$short),
-            value = v$user$scales,
-            scales[, -1:-2]
+            Шкала = sprintf("%s (%s)", scales$long, scales$short),
+            Балл = v$user$scales,
+            Уровень = get_levels(v$user$scales, scales$mean, scales$sd)
         )
         DT <- DT::datatable(DF, selection = "none", options = list(paging = FALSE, dom = 't'))
-        DT::formatStyle(DT, "value", fontWeight = "bold")
+        DT::formatStyle(DT, "Балл", fontWeight = "bold")
     })
 
     output$indexes <- DT::renderDataTable({
         DF <- data.frame(
-            Индексы = sprintf("%s (%s)", indexes$long, indexes$short),
-            value = v$user$indexes,
-            indexes[, -1:-2]
+            Индекс = sprintf("%s (%s)", indexes$long, indexes$short),
+            Балл = v$user$indexes,
+            Уровень = get_levels(v$user$indexes, indexes$mean, indexes$sd)
         )
         DT <- DT::datatable(DF, selection = "none", options = list(paging = FALSE, dom = 't'))
-        DT::formatStyle(DT, "value", fontWeight = "bold")
+        DT::formatStyle(DT, "Балл", fontWeight = "bold")
     })
 
-    output$log <- renderPrint({
-        v$user
+    output$plot_types <- renderPlot({
+        plot_types(v$user)
     })
 
 })
