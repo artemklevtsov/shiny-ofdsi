@@ -6,6 +6,16 @@ get_scores <- function(data, kyes, indexes) {
     return(data)
 }
 
+get_levels <- function(value, mean, sd) {
+    if (all(value == 0) || all(is.na(value)))
+        return(rep("Не установлен", length(value)))
+    res <- structure(character(length(value)), names = names(value))
+    res[value < mean - sd] <- "Низкий"
+    res[value > mean + sd] <- "Высокий"
+    res[res == ""] <- "Средний"
+    return(res)
+}
+
 get_types <- function(data) {
     nm1 <- c("ЭМ", "ЭИ", "ЭК")
     nm2 <- c("ИПА", "ИИА", "ИКА")
@@ -13,9 +23,6 @@ get_types <- function(data) {
     indexes <- indexes[indexes$short %in% nm2, ]
     user_scores <- data$indexes[names(data$indexes) %in% nm2]
     user_indexes <- data$scales[names(data$scales) %in% nm1]
-    lvl <- function(x, mean, sd) {
-        cut(x, c(mean - sd, mean + sd), rightmost.closed = TRUE, labels = c("Низкий", "Средний", "Высокий"))
-    }
     scs <- sapply(seq_along(user_scores), function(i) lvl(user_scores[i], scales$mean[i], scales$sd[i]))
     idx <- sapply(seq_along(user_indexes), function(i) lvl(user_indexes[i], indexes$mean[i], indexes$sd[i]))
     res <- mapply(function(i, j) types[types$Активность == i & types$Эмоциональность == j, "Описание"], scs, idx)
@@ -50,7 +57,8 @@ plot_types <- function(data) {
         geom_hline(yintercept = ymean, alpha = 0.3) +
         geom_vline(xintercept = xsd, linetype = "dashed", alpha = 0.3) +
         geom_hline(yintercept = ysd, linetype = "dashed", alpha = 0.3) +
-        coord_fixed(ratio) + theme_minimal() +
+        coord_fixed(ratio) +
+        theme_minimal() +
         annotate("text", x = rep(text_x, 2), y = rep(text_y, each = 2), label = text, alpha = 0.5) +
         theme(legend.position = "bottom",
               legend.direction = "vertical",
