@@ -16,11 +16,12 @@ shinyUI(dashboardPage(
             menuItem("Опросник", tabName = "quiz", icon = icon("pencil-square-o")),
             menuItem("Протокол", tabName = "protocol", icon = icon("bars")),
             menuItem("Показатели", tabName = "scales", icon = icon("table")),
-            menuItem("Графики", tabName = "plots", icon = icon("bar-chart"))
+            menuItem("Графики", tabName = "plots", icon = icon("bar-chart")),
+            menuItem("Интерпретация", tabName = "interp", icon = icon("info-circle"))
         ),
         selectInput("gender", "Пол", c("", "Мужчина", "Женщина")),
         numericInput("age", "Возраст", NA, min = 16, step = 1),
-        menuItem(downloadButton("download", label = "Скачать отчёт"))
+        menuItem(downloadButton("download", strong("Скачать отчёт")))
 
     ),
     dashboardBody(
@@ -35,7 +36,7 @@ shinyUI(dashboardPage(
                     includeMarkdown("data/instructions.md"),
                     helpText(id = "help", class = " text-center",
                              "Перед началом тестирования, укажите, пожалуйста, Ваш пол и возраст."),
-                    footer = div(align = "center", actionButton("start", "Начать тестирование"))
+                    footer = div(align = "center", actionButton("start", strong("Начать тестирование")))
                 ),
                 uiOutput("qbox")
             ),
@@ -60,8 +61,17 @@ shinyUI(dashboardPage(
             tabItem(
                 tabName = "plots",
                 fluidRow(
-                    box(width = 12,
-                        plotOutput("plot_types")
+                    tabBox(
+                        title = "Тип темперамента",
+                        width = 12,
+                        tabPanel(
+                            title = "По сферам",
+                            plotOutput("plot_types", width = "100%", height = "100%")
+                        ),
+                        tabPanel(
+                            title = "Общий",
+                            plotOutput("plot_type", width = "100%", height = "100%")
+                        )
                     )
                 ),
                 fluidRow(
@@ -75,11 +85,13 @@ shinyUI(dashboardPage(
                                  plotOutput("plot_resp_bar")
                         ),
                         tabPanel(title = "Все ответы",
-                                 plotOutput("plot_answers"))
+                                 plotOutput("plot_responses"))
                     )
-
                 )
-
+            ),
+            tabItem(
+                tabName = "interp",
+                uiOutput("itext")
             )
         )
     )

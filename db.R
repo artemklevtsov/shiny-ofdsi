@@ -2,19 +2,20 @@ library(DBI)
 library(RSQLite)
 
 init_db <- function(dbname = "db.sqlite") {
-    db <- dbConnect(RSQLite::SQLite(), dbname = dbname)
+    db <- dbConnect(SQLite(), dbname = dbname)
+    tables <- dbListTables(db)
     sql <- function(table, names, types) {
         fields <- c("id INTEGER PRIMARY KEY AUTOINCREMENT", paste(names, types))
         sprintf("CREATE TABLE %s (%s);",
                 table, paste(fields, collapse = ", "))
     }
-    if (!dbExistsTable(db, "answers"))
-        dbGetQuery(db, sql("answers", paste0("Q", seq_len(n)), "INTEGER"))
-    if (!dbExistsTable(db, "timings"))
+    if (!"responses" %in% tables)
+        dbGetQuery(db, sql("responses", paste0("Q", seq_len(n)), "INTEGER"))
+    if (!"timings" %in% tables)
         dbGetQuery(db, sql("timings", paste0("Q", seq_len(n)), "TEXT"))
-    if (!dbExistsTable(db, "results"))
+    if (!"results" %in% tables)
         dbGetQuery(db, sql("results", c(scales$short, indexes$short), "INTEGER"))
-    if (!dbExistsTable(db, "users"))
+    if (!"users" %in% tables)
         dbGetQuery(db, sql("users", c("start_session", "end_session", "start_test", "end_test", "age", "gender", "hash"),
                            c("TEXT", "TEXT", "TEXT", "TEXT", "INTEGER", "TEXT", "TEXT")))
     dbDisconnect(db)
@@ -33,14 +34,14 @@ write_data <- function(data, dbname = "db.sqlite") {
         sprintf("INSERT INTO %s (%s) VALUES (%s);",
                 table, columns, values)
     }
-    dbGetQuery(db, sql("answers", data$answers))
+    dbGetQuery(db, sql("responses", data$responses))
     dbGetQuery(db, sql("timings", format(data$resp_time, tz = "UTC")))
     dbGetQuery(db, sql("results", c(data$scales, data$indexes)))
     dbGetQuery(db, sql("users", c(start_session = format(data$start_test, tz = "UTC"),
                                   end_session = format(data$end_session, tz = "UTC"),
                                   start_test = format(data$start_test, tz = "UTC"),
                                   end_test = format(data$end_test, tz = "UTC"),
-                                  age = data$age, gender = data$gender, hash = data$hash)))
+                                  age = data$age, gender = data$gender, hash = digest::digest(data))))
     dbDisconnect(db)
 }
 

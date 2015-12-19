@@ -30,3 +30,12 @@ types <- read.csv2("data/types.csv", stringsAsFactors = FALSE)
 values <- read.csv2("data/interpretation.csv", stringsAsFactors = FALSE)
 keys <- get_keys("data/keys.txt")
 formulas <- get_formulas("data/formulax.txt")
+
+answer_buttons <- function(labels) {
+    ids <- paste0("ans", seq_along(labels))
+    div(
+        lapply(seq_along(labels), function(i) {
+            actionButton(ids[i], labels[i], class = "btn-block", style = "text-align: left;")
+        })
+    )
+}
